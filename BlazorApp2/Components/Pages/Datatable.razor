@@ -1,0 +1,179 @@
+﻿@page "/data"
+
+<h3>Person DataTable</h3>
+
+@if (!string.IsNullOrEmpty(AlertMessage))
+{
+    <div class="alert @AlertClass alert-dismissible fade show" role="alert">
+        @AlertMessage
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close" @onclick="CloseAlert">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<button class="btn btn-primary mb-3" @onclick="AddPerson">Add Person</button>
+
+<table class="table table-sm table-hover">
+    <thead class="thead-dark">
+        <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var person in People)
+        {
+            <tr class="@(person.IsEditing ? "table-active" : "")">
+                <td>
+                    @if (person.IsEditing)
+                    {
+                        <input type="text" class="form-control" @bind="person.FirstName" />
+                    }
+                    else
+                    {
+                        @person.FirstName
+                    }
+                </td>
+                <td>
+                    @if (person.IsEditing)
+                    {
+                        <input type="text" class="form-control" @bind="person.LastName" />
+                    }
+                    else
+                    {
+                        @person.LastName
+                    }
+                </td>
+                <td>
+                    @if (person.IsEditing)
+                    {
+                        <select class="form-control" @bind="person.Status">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    }
+                    else
+                    {
+                        <span class="@GetStatusClass(person.Status)">@person.Status</span>
+                    }
+                </td>
+                <td>
+                    @if (person.IsEditing)
+                    {
+                        <button class="btn btn-success" @onclick="() => SavePerson(person)">Save</button>
+                        <button class="btn btn-secondary" @onclick="() => CancelEdit(person)">Cancel</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-primary" @onclick="() => EditPerson(person)">Edit</button>
+                        <button class="btn btn-danger" @onclick="() => DeletePerson(person)">Delete</button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<style>
+    .status-active {
+        color: green;
+        font-weight: bold;
+    }
+
+    .status-inactive {
+        color: red;
+        font-weight: bold;
+    }
+</style>
+
+@code {
+    private List<Person> People = new List<Person>();
+    private string AlertMessage { get; set; }
+    private string AlertClass { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // Populate the People list with sample data
+        People = Enumerable.Range(1, 10).Select(x => new Person
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                Status = "Active"
+            }).ToList();
+    }
+
+    private void ShowAlert(string message, string alertClass)
+    {
+        AlertMessage = message;
+        AlertClass = alertClass;
+    }
+
+    private void CloseAlert()
+    {
+        AlertMessage = string.Empty;
+    }
+
+    private void AddPerson()
+    {
+        var newPerson = new Person
+            {
+                FirstName = "",
+                LastName = "",
+                Status = "Active",
+                IsEditing = true
+            };
+        People.Add(newPerson);
+        ShowAlert("New person added.", "alert-success");
+    }
+
+    private void EditPerson(Person person)
+    {
+        person.IsEditing = true;
+    }
+
+    private void SavePerson(Person person)
+    {
+        if (!string.IsNullOrWhiteSpace(person.FirstName) &&
+            !string.IsNullOrWhiteSpace(person.LastName))
+        {
+            person.IsEditing = false;
+            ShowAlert("Person updated successfully.", "alert-success");
+        }
+    }
+
+    private void CancelEdit(Person person)
+    {
+        if (string.IsNullOrWhiteSpace(person.FirstName) &&
+            string.IsNullOrWhiteSpace(person.LastName))
+        {
+            People.Remove(person);
+            ShowAlert("Person removed.", "alert-warning");
+        }
+        else
+        {
+            person.IsEditing = false;
+        }
+    }
+
+    private void DeletePerson(Person person)
+    {
+        People.Remove(person);
+        ShowAlert("Person deleted successfully.", "alert-danger");
+    }
+
+    private string GetStatusClass(string status)
+    {
+        return status == "Active" ? "status-active" : "status-inactive";
+    }
+
+    public class Person
+    {
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Status { get; set; }
+        public bool IsEditing { get; set; }
+    }
+}
